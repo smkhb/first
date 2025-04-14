@@ -1,12 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get } from '@nestjs/common'
+import { AppService } from './app.service'
+import { PrismaService } from './prisma/prisma.service'
 
-@Controller()
+@Controller('api')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly app: AppService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  @Get()
+  @Get('/hello')
   getHello(): string {
-    return this.appService.getHello();
+    return this.app.getHello()
+  }
+
+  @Get('/prisma')
+  async getPrisma(): Promise<any> {
+    return this.prisma.user.findMany()
   }
 }
