@@ -29,7 +29,13 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-  "title": "What is the capital of France?",
+  "title": "Where is the capital of France?",
   "content": "I would like to know the capital city of France."
 }
+###
+
+# @name fetch_recent_questions
+GET {{baseUrl}}/questions
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
 ###
