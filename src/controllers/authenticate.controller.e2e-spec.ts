@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -5,9 +6,10 @@ import { AppModule } from '@/app.module'
 import { PrismaService } from '@/prisma/prisma.service'
 import { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
+import { hash } from 'bcryptjs'
 import request from 'supertest'
 
-describe('Create account (e2e)', () => {
+describe('Authenticate account (e2e)', () => {
   let app: INestApplication
   let prisma: PrismaService
 
@@ -22,19 +24,23 @@ describe('Create account (e2e)', () => {
     await app.init()
   })
 
-  test('[POST] /accounts', async () => {
-    const response = await request(app.getHttpServer()).post('/accounts').send({
-      name: 'Test Account',
+  test('[POST] /sessions', async () => {
+    await prisma.user.create({
+      data: {
+        name: 'Test Account',
+        email: 'test@example.com',
+        password: await hash('password123', 8),
+      },
+    })
+
+    const response = await request(app.getHttpServer()).post('/sessions').send({
       email: 'test@example.com',
       password: 'password123',
     })
 
     expect(response.status).toBe(201)
-
-    const userOnDataBase = await prisma.user.findUnique({
-      where: { email: 'test@example.com' },
+    expect(response.body).toEqual({
+      access_token: expect.any(String),
     })
-
-    expect(userOnDataBase).toBeTruthy()
   })
 })
