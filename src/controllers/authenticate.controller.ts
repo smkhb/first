@@ -21,7 +21,10 @@ type AuthenticateBodySchema = z.infer<typeof authenticateBodySchema>
 
 @Controller('sessions')
 export class AuthenticateController {
-  constructor(private jwt: JwtService, private prisma: PrismaService) {}
+  constructor(
+    private jwt: JwtService,
+    private prisma: PrismaService,
+  ) {}
 
   @Post()
   @HttpCode(201)

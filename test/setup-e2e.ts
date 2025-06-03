@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import 'dotenv/config'
 import { randomUUID } from 'crypto'
 import { PrismaClient } from 'generated/prisma/client'
