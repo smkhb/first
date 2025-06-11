@@ -29,8 +29,8 @@ Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 {
-  "title": "Where is the capital of France?",
-  "content": "I would like to know the capital city of France."
+  "title": "What is the best way to learn programming?",
+  "content": "I'm looking for resources and tips on how to effectively learn programming as a beginner. Any advice would be appreciated!"
 }
 ###
 
