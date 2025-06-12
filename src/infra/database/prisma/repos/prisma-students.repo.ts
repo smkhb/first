@@ -22,7 +22,11 @@ export class PrismaStudentsRepo implements StudentsRepository {
     return PrismaStudentMapper.toDomain(student)
   }
 
-  create(student: Student): Promise<void> {
-    throw new Error('Method not implemented.')
+  async create(student: Student): Promise<void> {
+    const data = PrismaStudentMapper.toPrisma(student)
+
+    await this.prisma.user.create({
+      data,
+    })
   }
 }
