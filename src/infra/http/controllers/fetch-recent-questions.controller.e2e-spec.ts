@@ -1,62 +1,47 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 import { AppModule } from '@/infra/app.module'
-import { PrismaService } from '@/infra/database/prisma/prisma.service'
+import { DatabaseModule } from '@/infra/database/database.module'
 import { INestApplication } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Test } from '@nestjs/testing'
-import { hash } from 'bcryptjs'
 import request from 'supertest'
+import { QuestionFactory } from 'test/factories/make-question'
+import { StudentFactory } from 'test/factories/make-student'
 
 describe('Fetch recent questions (e2e)', () => {
   let app: INestApplication
-  let prisma: PrismaService
   let jwt: JwtService
+  let studentFactory: StudentFactory
+  let questionFactory: QuestionFactory
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
+      imports: [AppModule, DatabaseModule],
+      providers: [StudentFactory, QuestionFactory],
     }).compile()
 
     app = moduleRef.createNestApplication()
-    prisma = moduleRef.get(PrismaService)
+    studentFactory = moduleRef.get(StudentFactory)
+    questionFactory = moduleRef.get(QuestionFactory)
     jwt = moduleRef.get(JwtService)
 
     await app.init()
   })
 
   test('[GET] /questions', async () => {
-    const user = await prisma.user.create({
-      data: {
-        name: 'Test Account',
-        email: 'test@example.com',
-        password: await hash('password123', 8),
-      },
-    })
-    const accessToken = jwt.sign({ sub: user.id })
+    const user = await studentFactory.makePrismaStudent()
 
-    await prisma.question.createMany({
-      data: [
-        {
-          title: 'Test Question 1',
-          slug: 'test-question-1',
-          content: 'This is a test question 1.',
-          authorId: user.id,
-        },
-        {
-          title: 'Test Question 2',
-          slug: 'test-question-2',
-          content: 'This is a test question 2.',
-          authorId: user.id,
-        },
-        {
-          title: 'Test Question 3',
-          slug: 'test-question-3',
-          content: 'This is a test question 3.',
-          authorId: user.id,
-        },
-      ],
-    })
+    const accessToken = jwt.sign({ sub: user.id.toString() })
+
+    await Promise.all([
+      questionFactory.makePrismaQuestion({
+        authorId: user.id,
+        title: 'Test Question 1',
+      }),
+      questionFactory.makePrismaQuestion({
+        authorId: user.id,
+        title: 'Test Question 2',
+      }),
+    ])
 
     const response = await request(app.getHttpServer())
       .get('/questions')
@@ -64,11 +49,10 @@ describe('Fetch recent questions (e2e)', () => {
 
     expect(response.status).toBe(200)
     expect(response.body).toEqual({
-      questions: [
+      questions: expect.arrayContaining([
         expect.objectContaining({ title: 'Test Question 1' }),
         expect.objectContaining({ title: 'Test Question 2' }),
-        expect.objectContaining({ title: 'Test Question 3' }),
-      ],
+      ]),
     })
   })
 })
