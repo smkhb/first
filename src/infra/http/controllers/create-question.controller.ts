@@ -26,15 +26,15 @@ export class CreateQuestionController {
     const { title, content } = body
     const userId = user.sub
 
-    if (!userId) {
-      throw new BadRequestException()
-    }
-
-    await this.createQuestion.execute({
+    const result = await this.createQuestion.execute({
       authorId: userId,
       title,
       content,
       attachmentsIds: [],
     })
+
+    if (result.isLeft()) {
+      throw new BadRequestException()
+    }
   }
 }
