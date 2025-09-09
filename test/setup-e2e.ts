@@ -1,7 +1,11 @@
 import 'dotenv/config'
+import { config } from 'dotenv'
 import { randomUUID } from 'crypto'
 import { PrismaClient } from 'generated/prisma/client'
 import { execSync } from 'node:child_process'
+
+config({ path: '.env', override: true })
+config({ path: '.env.test', override: true })
 
 const prisma = new PrismaClient()
 const schemaId = randomUUID()
