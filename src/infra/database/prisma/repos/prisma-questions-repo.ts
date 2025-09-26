@@ -8,11 +8,13 @@ import { QuestionAttachmentsRepository } from '@/domain/forum/application/reposi
 import { QuestionWithDetails } from '@/domain/forum/enterprise/entities/value-objects/question-details'
 import { PrismaQuestionDetailsMapper } from '../mappers/prisma-question-details-mapper'
 import { DomainEvents } from '@/core/events/domain-events'
+import { CacheRepo } from '@/infra/cache/cache-repo'
 @Injectable()
 export class PrismaQuestionsRepo implements QuestionsRepository {
   constructor(
     private prisma: PrismaService,
     private questionAttachmentRepository: QuestionAttachmentsRepository,
+    private cacheRepo: CacheRepo,
   ) {}
 
   async findById(id: string): Promise<Question | null> {
@@ -40,6 +42,14 @@ export class PrismaQuestionsRepo implements QuestionsRepository {
   }
 
   async findDetailsBySlug(slug: string): Promise<QuestionWithDetails | null> {
+    const cacheHit = await this.cacheRepo.get(`question:${slug}:details`)
+
+    if (cacheHit) {
+      const cachedData = JSON.parse(cacheHit)
+
+      return cachedData
+    }
+
     const question = await this.prisma.question.findUnique({
       where: { slug },
       include: { author: true, attachments: true },
@@ -49,7 +59,14 @@ export class PrismaQuestionsRepo implements QuestionsRepository {
       return null
     }
 
-    return PrismaQuestionDetailsMapper.toDomain(question)
+    const questionDetails = PrismaQuestionDetailsMapper.toDomain(question)
+
+    await this.cacheRepo.set(
+      `question:${slug}:details`,
+      JSON.stringify(questionDetails),
+    )
+
+    return questionDetails
   }
 
   async findManyRecent({ page }: PaginationParams): Promise<Question[]> {
@@ -93,6 +110,7 @@ export class PrismaQuestionsRepo implements QuestionsRepository {
       this.questionAttachmentRepository.deleteMany(
         question.attachments.getRemovedItems(),
       ),
+      this.cacheRepo.delete(`question:${data.slug}:details`),
     ])
 
     DomainEvents.dispatchEventsForAggregate(question.id)
