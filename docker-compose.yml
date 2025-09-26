@@ -1,13 +1,13 @@
 services:
   postgres:
-    container_name: nest-first
-    image: postgres
+    container_name: nest-db
+    image: postgres:17
     ports:
       - 5432:5432
     environment:
       POSTGRES_USER: nest_user
       POSTGRES_PASSWORD: nest_password
-      POSTGRES_DB: nest_first
+      POSTGRES_DB: nest_db
       PGDATA: /data/postgres
     volumes:
       - ./data/pg:/data/postgres
